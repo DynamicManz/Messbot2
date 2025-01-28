@@ -43,6 +43,18 @@ def count_non_bot_members(guild):
 
 @bot.event
 async def on_member_join(member):
+    """Automatically assign role to new members"""
+    try:
+        role = member.guild.get_role(ROLE_ID3)
+        if role:
+            await member.add_roles(role)
+            print(f'Assigned role to {member.name}')
+        else:
+            print(f'Role with ID {ROLE_ID3} not found')
+    except Exception as e:
+        print(f'Error assigning role: {e}')
+        
+async def on_member_join(member):
     if member.bot:
         return
         
@@ -153,39 +165,7 @@ async def on_ready():
                 print(f'Initialized {channel.name} with {len(messages)} messages')
             except Exception as e:
                 print(f'Error accessing channel {channel.name}: {e}')
-@bot.event
-async def on_member_join(member):
-    """Automatically assign role to new members"""
-    try:
-        role = member.guild.get_role(ROLE_ID3)
-        if role:
-            await member.add_roles(role)
-            print(f'Assigned role to {member.name}')
-        else:
-            print(f'Role with ID {ROLE_ID3} not found')
-    except Exception as e:
-        print(f'Error assigning role: {e}')
 
-@tasks.loop(hours=DELETE_INTERVAL_HOURS)
-async def delete_old_messages():
-    """Delete messages from all channels every 20 hours"""
-    for guild in bot.guilds:
-        for channel in guild.text_channels:
-            try:
-                # Check if bot has permission to manage messages in this channel
-                if channel.permissions_for(guild.me).manage_messages:
-                    deleted = await channel.purge(
-                        limit=None,  # No limit on number of messages to delete
-                        check=lambda m: not m.pinned  # Don't delete pinned messages
-                    )
-                    print(f'Deleted {len(deleted)} messages from {channel.name}')
-            except Exception as e:
-                print(f'Error deleting messages in {channel.name}: {e}')
-
-@delete_old_messages.before_loop
-async def before_delete():
-    """Wait until the bot is ready before starting the deletion loop"""
-    await bot.wait_until_ready()
 
 @bot.event
 async def on_message(message):
